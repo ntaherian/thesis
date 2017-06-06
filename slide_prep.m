@@ -2,13 +2,13 @@
 % Try log of intensity.
 % Use X and Y as a feature for K-Means.
 imshow(A/max(A(:)), [])
-
-Z = max(X_patch, [], 3);
-%Z = reshape(X, image_patch(1:2))
+Z = sum(A.^2, 3).^.5;
+Z = Z/max(Z(:));
 figure;
-imshow(Z/max(Z(:)), [])
+imshow(Z, [])
 figure;
-hist(X/max(X), 50);
+hist(Z(:), 200);
+xlabel('pixel values');ylabel('Number of pixels (x10^4)');
 
 %% Slide 2 - 1
 Z = reshape(idx_patch, image_patch(1:2));
@@ -24,19 +24,21 @@ for k = 1:K
     X3 = hist(X3, x_axis);
     X4 = [X4; X3];
 end
-bar(x_axis, X4', 7)
+bar(x_axis, X4',5,'histc')
+xlabel('pixel values');ylabel('Number of pixels (x10^4)');
+
 %% Slide 3
 X2 = max(X_recovered, [], 3);
 X2 = X2(:);
 %X2 = X2 / max(X2);
 X4 = [];
-x_axis = linspace(0,2,200);
+x_axis = linspace(0,2.5,200);
 for k = 1:K
     X3 = X2(idx_patch == k);
     X3 = hist(X3, x_axis);
     X4 = [X4; X3];
 end
-bar(x_axis, X4', 7)
+bar(x_axis, X4', 5,'histc')
 hold all;
 for k = 1:K
     plot([k/K, k/K], [-100, 1e5])
