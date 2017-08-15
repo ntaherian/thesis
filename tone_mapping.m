@@ -20,7 +20,7 @@ end
 %         context.K = size(findpeaks(smooth_hue_hist),2);
 % end
 K = context.K;
-K = 10;
+%K =45;
 image_patch = size(A);
 img_size = size(A);
 
@@ -35,14 +35,13 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         X_patch = A(i:i+image_patch(1)-1,j:j+image_patch(2)-1,:);
         n = n + 1;
         X = reshape(X_patch, image_patch(1) * image_patch(2),3);
+        max_X = max(X(:));
+        additive = max_X/50000;
 %         hsv = rgb2hsv(X);
 %         smooth_hue_hist = ksdensity(hsv(:,1));
 %         K = size(findpeaks(smooth_hue_hist),2);
 %         centroids = zeros(NumOfPatches,K,3);
         X = sum(X.^2, 2).^.5;
-        X_hat = X;
-        max_X = max(X(:));
-        additive = max_X/5000;
         %X = mean(X,2);
         %X = min(X, [], 2);
         %X = max(X, [], 2);
@@ -64,7 +63,7 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         else
             max_iters = context.iters;
             initial_centroids = context.centroids;
-            kmeans_alpha = 1;
+            kmeans_alpha = 0.2;
         end
 
         [centroids_patch, idx_patch] = runkMeans1(X, initial_centroids, max_iters, false, kmeans_alpha);
@@ -116,14 +115,11 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         adjustment_coeff = reshape(adjustment_coeff, image_patch);
         max_adjustment_coeff = max((adjustment_coeff(:)));
         adjustment_coeff = adjustment_coeff/max_adjustment_coeff;
-        %adjustment_coeff = bfilter2(adjustment_coeff,3,1/500*max(image_patch(1),image_patch(2))) * max_adjustment_coeff;
-        adjustment_coeff = imgaussfilt(adjustment_coeff, context.sigma) * max_adjustment_coeff;
-        %adjustment_coeff = medfilt3(adjustment_coeff)* max_adjustment_coeff;
+        %adjustment_coeff = bfilter2(adjustment_coeff,5,context.sigma);
+        adjustment_coeff = imgaussfilt(adjustment_coeff, context.sigma);
+        %adjustment_coeff = medfilt3(adjustment_coeff);
+        adjustment_coeff = adjustment_coeff * max_adjustment_coeff;
         X_recovered = X_patch .* adjustment_coeff;
-%         for k = 1:K
-%             indices = idx_patch == k; 
-%             X_recovered(indices) == histe
-%         end
         X_recovered = reshape(X_recovered, image_patch(1), image_patch(2), 3);
         image_recovered(n,:,:,:) = X_recovered;
     end
