@@ -1,5 +1,5 @@
 %% clustering image patches 
-A = double(hdrread('nave.hdr'));
+A = double(hdrread('7.hdr'));
 cform = makecform('srgb2lab');
 %A = A(1:200, 1:200, :);
 %A = ans;
@@ -10,9 +10,12 @@ A_lab = applycform(A,cform);
 ab = double(A_lab(:,:,2:3));
 A_reshape = reshape(ab, img_size(1) * img_size(2),2);
 smooth_lab = ksdensity(A_reshape);
-K = size(findpeaks(smooth_lab),1);
-%K = 95;
-max_iters = 10;
+%K = size(findpeaks(smooth_lab),1);
+% evalclusters(smooth_lab,'kmeans','gap','KList',[32,64,128,256,512],...
+% 'Distance','cityblock');
+% K = eva.OptimalK;
+K=150;
+max_iters = 5;
 w = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1;
 h = 1 : image_patch(2) : img_size(2) - image_patch(2) + 1;
 NumOfPatches = size(w,2) * size(h,2);
@@ -25,7 +28,7 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         n = n + 1;
         X = reshape(X_patch, image_patch(1) * image_patch(2),3);
         max_X = max(X(:));
-        additive = max_X/2000000000000000000000000000;
+        additive = max_X/(20*10^100);
         X = sum(X.^2, 2).^.5;
         %X = mean(X,2);
         %X = max(X, [], 2);
@@ -64,7 +67,7 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         max_adjustment_coeff = max((adjustment_coeff(:)));
         adjustment_coeff = adjustment_coeff/max_adjustment_coeff;
         %adjustment_coeff = bfilter2(adjustment_coeff,5,1/700*max(image_patch(1),image_patch(2)));
-        adjustment_coeff = imgaussfilt(adjustment_coeff,1/100*max(image_patch(1),image_patch(2)));
+        adjustment_coeff = imgaussfilt(adjustment_coeff,1/900*max(image_patch(1),image_patch(2)));
         %adjustment_coeff = medfilt3(adjustment_coeff)* max_adjustment_coeff;
         adjustment_coeff = adjustment_coeff * max_adjustment_coeff;
         X_recovered = X_patch .* adjustment_coeff;

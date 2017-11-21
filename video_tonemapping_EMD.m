@@ -3,10 +3,10 @@ VideoList = dir(sprintf('%s/*.exr',VideoDir));
 
 nFrames = length(VideoList);
 cform = makecform('srgb2lab');
-%nFrames = 350;
 
 A = double(exrread(sprintf('%s/%s',VideoDir,VideoList(1).name)));
 size_frame = size(A);
+
 % A_lab = applycform(A,cform);
 % ab = double(A_lab(:,:,2:3));
 % A_reshape = reshape(ab, size_frame(1) * size_frame(2),2);
@@ -23,26 +23,26 @@ size_frame = size(A);
 image_sequence = zeros([size_frame,nFrames]);
 
 context.initialize = true;
-context.initial_iters = 10; 
+context.initial_iters = 5; 
 context.iters = 1;
-context.sigma = 1/500*max(size_frame(1),size_frame(2));
+context.sigma = 1/400*max(size_frame(1),size_frame(2));
 
-videoWriter = VideoWriter('/Users/ntaheria/Desktop/output499.avi');
+videoWriter = VideoWriter('/Users/ntaheria/Desktop/output16.avi');
 open(videoWriter);
 distances = [];
-
+tic
 for i = 1 : nFrames
     fprintf('Frame %d\n', i)
     frame = exrread(sprintf('%s/%s',VideoDir,VideoList(i).name));
     frame = double(frame);
-    if (i > 1)
-        distance = scene_change(frame,prev_frame)
-        distances = [distances distance];
-        if (distance > 2)
-            context.initialize = true; 
-        end
-    end
-    prev_frame = frame;
+%     if (i > 1)
+%         distance = scene_change(frame,prev_frame)
+%         distances = [distances distance];
+%         if (distance > 1.5)
+%             context.initialize = true; 
+%         end
+%     end
+%     prev_frame = frame;
 
     %max_frame = max(frame(:));
     %frame = frame/max_frame;
@@ -52,6 +52,7 @@ for i = 1 : nFrames
     video_frame = min(max(frame_tonemapped, 0), 1);
     writeVideo(videoWriter, video_frame);
 end
+toc
 %imshow(frame_tonemapped);
 close(videoWriter);
 %imshow([frame, frame_tonemapped])

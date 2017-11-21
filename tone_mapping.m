@@ -8,19 +8,12 @@ if context.initialize
     ab = double(A_lab(:,:,2:3));
     A_reshape = reshape(ab, size_frame(1) * size_frame(2),2);
     smooth_lab = ksdensity(A_reshape);
+%     evalclusters(smooth_lab,'kmeans','gap','KList',[32,64,128,256,512],...
+%     'Distance','cityblock')
+%     context.K = eva.OptimalK;
     context.K = size(findpeaks(smooth_lab),1);
 end
-% if context.initialize 
-%         size_frame = size(A);
-%         A_reshape = reshape(A, size_frame(1) * size_frame(2),3);
-%         max_A = max(A_reshape(:));
-%         A_reshape = A_reshape/max_A;
-%         hsv = rgb2hsv(A_reshape);
-%         smooth_hue_hist = ksdensity(hsv(:,1));
-%         context.K = size(findpeaks(smooth_hue_hist),2);
-% end
 K = context.K;
-%K =45;
 image_patch = size(A);
 img_size = size(A);
 
@@ -36,24 +29,14 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         n = n + 1;
         X = reshape(X_patch, image_patch(1) * image_patch(2),3);
         max_X = max(X(:));
-        additive = max_X/50000;
-%         hsv = rgb2hsv(X);
-%         smooth_hue_hist = ksdensity(hsv(:,1));
-%         K = size(findpeaks(smooth_hue_hist),2);
-%         centroids = zeros(NumOfPatches,K,3);
-        X = sum(X.^2, 2).^.5;
+        additive = max_X/9800;
+        %mean_X = mean(X(:));
+        %additive = mean_X/9000;
+        %X = sum(X.^2, 2).^.5;
         %X = mean(X,2);
         %X = min(X, [], 2);
-        %X = max(X, [], 2);
+        X = max(X, [], 2);
         X = log(X + additive);
-
-        
-        %         [cor1, cor2] = meshgrid(1:img_size(1),1:img_size(2));
-        %         cor1 = cor1/img_size(1);
-        %         cor1 = cor1(:);
-        %         cor2 = cor2/img_size(2);
-        %         cor2 = cor2(:);
-        %         X = [X, cor1, cor2];
         
         if (context.initialize)
             context.initialize = false;
@@ -63,11 +46,10 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         else
             max_iters = context.iters;
             initial_centroids = context.centroids;
-            kmeans_alpha = 0.2;
+            kmeans_alpha = 0.75;
         end
 
         [centroids_patch, idx_patch] = runkMeans1(X, initial_centroids, max_iters, false, kmeans_alpha);
-        %[centroids_patch, idx_patch] = runkMeans(X, initial_centroids, max_iters, false);
         
         if (any(isnan(centroids_patch)) == true)
             idx_nan = isnan(centroids_patch);
@@ -79,12 +61,6 @@ for i = 1 : image_patch(1) : img_size(1) - image_patch(1) + 1
         %centroids_patch_brightness = max(centroids_patch, [], 2);
         %centroids_patch_brightness = sum(centroids_patch.^2, 2).^.5;
         centroids_patch_brightness = exp(centroids_patch - additive);
-%         centroids_patch_brightness = zeros(size(centroids_patch));
-%         for k = 1:K
-%             centroids_patch_brightness(k) = mean(X_hat(idx_patch==k));
-%         end
-        %centroids_patch_brightness = centroids_patch;
-
         C = sort(centroids_patch_brightness);
         I = zeros(size(C));
         for k = 1:K
